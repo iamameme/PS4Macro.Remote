@@ -35,6 +35,8 @@ namespace PS4Macro.Remote
     {
         public MainForm MainForm { get; private set; }
 
+        public Nullable<DateTime> waitTimestamp { get; private set; }
+
         public Script()
         {
             Config.Name = "Remote";
@@ -42,6 +44,7 @@ namespace PS4Macro.Remote
             Config.EnableCapture = false;
 
             ScriptForm = MainForm = new MainForm();
+            waitTimestamp = null;
         }
 
         public override void OnMacroLapEnter(object sender)
@@ -61,11 +64,21 @@ namespace PS4Macro.Remote
 
         public override void Update()
         {
+            waitASecond = false;
+            if (waitTimestamp != null)
+            {
+                TimeSpan span = DateTime.Now - waitTimestamp;
+                if (span.Milliseconds < 1000)
+                {
+                    waitASecond = true;
+                }
+            }
             // Key is down
-            if (MainForm.IsKeyDown())
+            if (MainForm.IsKeyDown() && !waitASecond)
             {
                 try
                 {
+                    waitTimestamp = DateTime.Now;
                     List<Keys> keys = MainForm.PressedKeys.Keys.ToList();
                     MainForm.KeyboardMap.ExecuteActionsByKey(this, keys);
                 }
